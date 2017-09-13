@@ -6,11 +6,11 @@ import com.twitter.finagle.buoyant.h2.{Request, Response}
 import com.twitter.util.Stopwatch
 import io.buoyant.config.types.Port
 import io.buoyant.k8s.istio.mixer.MixerClient
-import io.buoyant.k8s.istio.{IstioConfigurator, IstioLoggerBase, _}
-import io.buoyant.linkerd.LoggerInitializer
-import io.buoyant.linkerd.protocol.h2.H2LoggerConfig
+import io.buoyant.k8s.istio.{IstioConfigurator, IstioRequestAuthorizerBase, _}
+import io.buoyant.linkerd.RequestAuthorizerInitializer
+import io.buoyant.linkerd.protocol.h2.H2RequestAuthorizerConfig
 
-class IstioLogger(val mixerClient: MixerClient, params: Stack.Params) extends Filter[Request, Response, Request, Response] with IstioLoggerBase {
+class IstioRequestAuthorizer(val mixerClient: MixerClient, params: Stack.Params) extends Filter[Request, Response, Request, Response] with IstioRequestAuthorizerBase {
 
   def apply(req: Request, svc: Service[Request, Response]) = {
     val istioRequest = H2IstioRequest(req)
@@ -27,28 +27,28 @@ class IstioLogger(val mixerClient: MixerClient, params: Stack.Params) extends Fi
   }
 }
 
-case class IstioLoggerConfig(
+case class IstioRequestAuthorizerConfig(
   mixerHost: Option[String] = Some(DefaultMixerHost),
   mixerPort: Option[Port] = Some(Port(DefaultMixerPort))
-) extends H2LoggerConfig with IstioConfigurator {
+) extends H2RequestAuthorizerConfig with IstioConfigurator {
 
   @JsonIgnore
-  override def role = Stack.Role("IstioLogger")
+  override def role = Stack.Role("IstioRequestAuthorizer")
   @JsonIgnore
-  override def description = "Logs telemetry data to Istio Mixer"
+  override def description = "Checks if request is authorised"
 
   @JsonIgnore
   override def parameters = Seq()
 
   @JsonIgnore
   def mk(params: Stack.Params): Filter[Request, Response, Request, Response] = {
-    new IstioLogger(mkMixerClient(mixerHost, mixerPort), params)
+    new IstioRequestAuthorizer(mkMixerClient(mixerHost, mixerPort), params)
   }
 }
 
-class IstioLoggerInitializer extends LoggerInitializer {
-  val configClass = classOf[IstioLoggerConfig]
+class IstioRequestAuthorizerInitializer extends RequestAuthorizerInitializer {
+  val configClass = classOf[IstioRequestAuthorizerConfig]
   override val configId = "io.l5d.k8s.istio"
 }
 
-object IstioLoggerInitializer extends IstioLoggerInitializer
+object IstioRequestAuthorizerInitializer extends IstioRequestAuthorizerInitializer

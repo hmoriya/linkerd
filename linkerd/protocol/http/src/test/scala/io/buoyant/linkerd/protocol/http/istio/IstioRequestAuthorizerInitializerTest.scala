@@ -10,7 +10,7 @@ import io.buoyant.test.Awaits
 import istio.mixer.v1.Mixer
 import org.scalatest.FunSuite
 
-class IstioLoggerTest extends FunSuite with Awaits {
+class IstioRequestAuthorizerInitializerTest extends FunSuite with Awaits {
 
   class MockMixerClient extends MixerClient(new Mixer.Client(H2.client.newService("example.com:80"))) {
     var reports = 0
@@ -30,12 +30,12 @@ class IstioLoggerTest extends FunSuite with Awaits {
   val mixerClient = new MockMixerClient()
 
   test("creates a logger") {
-    val logger = new IstioLogger(mixerClient, Stack.Params.empty)
+    val logger = new IstioRequestAuthorizer(mixerClient, Stack.Params.empty)
     assert(mixerClient.reports == 0)
   }
 
   test("apply triggers a mixer report") {
-    val logger = new IstioLogger(mixerClient, Stack.Params.empty)
+    val logger = new IstioRequestAuthorizer(mixerClient, Stack.Params.empty)
     val svc = Service.mk[Request, Response] { req =>
       Future.value(Response())
     }
