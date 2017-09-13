@@ -6,25 +6,14 @@ import com.twitter.finagle.http.{Request, Response}
 import com.twitter.util._
 import io.buoyant.config.types.Port
 import io.buoyant.k8s.istio.mixer.MixerClient
-import io.buoyant.k8s.istio.{IstioConfigurator, IstioRequestAuthorizerBase, _}
+import io.buoyant.k8s.istio.{IstioConfigurator, IstioRequestAuthorizerFilter, _}
 import io.buoyant.linkerd.RequestAuthorizerInitializer
 import io.buoyant.linkerd.protocol.HttpRequestAuthorizerConfig
 
-class IstioRequestAuthorizer(val mixerClient: MixerClient, params: Stack.Params) extends Filter[Request, Response, Request, Response] with IstioRequestAuthorizerBase {
+class IstioRequestAuthorizer(val mixerClient: MixerClient, params: Stack.Params) extends IstioRequestAuthorizerFilter[Request, Response] {
+  override def toIstioRequest(req: Request) = HttpIstioRequest(req)
 
-  def apply(req: Request, svc: Service[Request, Response]) = {
-    val istioRequest = HttpIstioRequest(req)
-
-    val elapsed = Stopwatch.start()
-
-    svc(req).respond { ret =>
-
-      val duration = elapsed()
-      val istioResponse = HttpIstioResponse(ret, duration)
-
-      val _ = report(istioRequest, istioResponse, duration)
-    }
-  }
+  override def toIstioResponse(resp: Try[Response], duration: Duration) = HttpIstioResponse(resp, duration)
 }
 
 case class IstioRequestAuthorizerInitializerConfig(

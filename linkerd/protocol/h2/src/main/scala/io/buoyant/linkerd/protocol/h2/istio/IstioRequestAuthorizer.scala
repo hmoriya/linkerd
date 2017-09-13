@@ -3,28 +3,17 @@ package io.buoyant.linkerd.protocol.h2.istio
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.twitter.finagle._
 import com.twitter.finagle.buoyant.h2.{Request, Response}
-import com.twitter.util.Stopwatch
+import com.twitter.util.{Duration, Stopwatch, Try}
 import io.buoyant.config.types.Port
 import io.buoyant.k8s.istio.mixer.MixerClient
-import io.buoyant.k8s.istio.{IstioConfigurator, IstioRequestAuthorizerBase, _}
+import io.buoyant.k8s.istio.{IstioConfigurator, IstioRequestAuthorizerFilter, _}
 import io.buoyant.linkerd.RequestAuthorizerInitializer
 import io.buoyant.linkerd.protocol.h2.H2RequestAuthorizerConfig
 
-class IstioRequestAuthorizer(val mixerClient: MixerClient, params: Stack.Params) extends Filter[Request, Response, Request, Response] with IstioRequestAuthorizerBase {
+class IstioRequestAuthorizer(val mixerClient: MixerClient, params: Stack.Params) extends IstioRequestAuthorizerFilter[Request, Response] {
+  override def toIstioRequest(req: Request) = H2IstioRequest(req)
 
-  def apply(req: Request, svc: Service[Request, Response]) = {
-    val istioRequest = H2IstioRequest(req)
-
-    val elapsed = Stopwatch.start()
-
-    svc(req).respond { ret =>
-
-      val duration = elapsed()
-      val istioResponse = H2IstioResponse(ret, duration)
-
-      val _ = report(istioRequest, istioResponse, duration)
-    }
-  }
+  override def toIstioResponse(resp: Try[Response], duration: Duration) = H2IstioResponse(resp, duration)
 }
 
 case class IstioRequestAuthorizerConfig(
@@ -34,6 +23,7 @@ case class IstioRequestAuthorizerConfig(
 
   @JsonIgnore
   override def role = Stack.Role("IstioRequestAuthorizer")
+
   @JsonIgnore
   override def description = "Checks if request is authorised"
 
