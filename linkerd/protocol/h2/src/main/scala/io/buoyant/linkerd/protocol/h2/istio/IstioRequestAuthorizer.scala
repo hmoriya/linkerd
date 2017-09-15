@@ -2,8 +2,9 @@ package io.buoyant.linkerd.protocol.h2.istio
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.twitter.finagle._
+import com.twitter.finagle.buoyant.h2
 import com.twitter.finagle.buoyant.h2.{Request, Response}
-import com.twitter.util.{Duration, Stopwatch, Try}
+import com.twitter.util.{Duration, Try}
 import io.buoyant.config.types.Port
 import io.buoyant.k8s.istio.mixer.MixerClient
 import io.buoyant.k8s.istio.{IstioConfigurator, IstioRequestAuthorizerFilter, _}
@@ -14,6 +15,8 @@ class IstioRequestAuthorizer(val mixerClient: MixerClient, params: Stack.Params)
   override def toIstioRequest(req: Request) = H2IstioRequest(req)
 
   override def toIstioResponse(resp: Try[Response], duration: Duration) = H2IstioResponse(resp, duration)
+
+  override def toFailedResponse(code: Int, reason: String) = Response(h2.Status(code), h2.Stream.const(reason))
 }
 
 case class IstioRequestAuthorizerConfig(
