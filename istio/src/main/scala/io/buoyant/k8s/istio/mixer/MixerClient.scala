@@ -22,7 +22,6 @@ case class MixerCheckStatus(grpcStatus: GrpcStatus) {
   /**
    * Converts between Mixer's status codes and HTTP status codes, as per [[https://github.com/istio/proxy/blob/7b85ad9cdfa460e928dd24b6c779b1b0e82fff4f/src/envoy/mixer/http_filter.cc#L66 Istio's default proxy]]
    */
-  //TODO: test this
   def httpCode = grpcStatus match {
     case _: Ok => 200
     case _: Canceled => 499
@@ -84,7 +83,11 @@ class MixerClient(client: Mixer) {
     Future.Done
   }
 
-  //TODO: doc
+  /**
+   * Checks this request agains  ixer' Pre-Condition system, using the [[https://istio.io/docs/reference/api/mixer/mixer-service.html#check Check API]]
+   * @param istioRequest
+   * @return
+   */
   def checkPreconditions(istioRequest: IstioRequest[_]): Future[MixerCheckStatus] = {
     val checkRequest = MixerApiRequests.mkCheckRequest(istioRequest)
     log.trace("MixerClient.check: %s", checkRequest)
@@ -97,7 +100,7 @@ class MixerClient(client: Mixer) {
 
   private def handleExceptionInPreconditionCheck(e: Throwable) = {
     //TODO: Consider making this behaviour configurable, as per https://github.com/istio/mixerclient/blob/13460a96b4b3aa792ad47817d4fbf529b63c25e2/src/check_cache.cc#L163
-    log.error(e, "Error checking Mixer pre-conditions");
+    log.error("Error checking Mixer pre-conditions: %s - %s", e.getClass, e.getMessage);
     Future.value(MixerCheckStatus(codeUsedWhenUnknownStatus))
   }
 

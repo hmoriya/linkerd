@@ -66,7 +66,8 @@ class MixerApiRequestsTest extends FunSuite {
       "POST",
       "clientsvc",
       (_) => None,
-      Request()
+      Request(),
+      None
     )
     val checkRequest = MixerApiRequests.mkCheckRequest(istioRequest)
 
@@ -80,7 +81,8 @@ class MixerApiRequestsTest extends FunSuite {
       "POST",
       "clientsvc",
       (_) => None,
-      Request()
+      Request(),
+      None
     )
     val reportRequest = MixerApiRequests.mkCheckRequest(istioRequest)
 

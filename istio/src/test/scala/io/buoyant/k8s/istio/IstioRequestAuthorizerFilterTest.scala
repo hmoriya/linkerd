@@ -15,7 +15,7 @@ class IstioRequestAuthorizerFilterTest extends FunSuite with Awaits {
   case class Resp(failed: Boolean = false)
 
   class TestIstioRequestAuthorizerFilter(val mixerClient: MixerClient) extends IstioRequestAuthorizerFilter[Req, Resp] {
-    def toIstioRequest(req: Req): IstioRequest[Req] = IstioRequest("uri", "scheme", "method", "authority", (_) => None, req)
+    def toIstioRequest(req: Req): IstioRequest[Req] = IstioRequest("uri", "scheme", "method", "authority", (_) => None, req, None)
 
     def toIstioResponse(resp: Try[Resp], duration: Duration): IstioResponse[Resp] = IstioResponse(-1, Duration.Bottom, Some(resp.get()))
 

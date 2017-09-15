@@ -12,6 +12,7 @@ import istio.mixer.v1._
 import scala.io.Source
 
 object MixerApiRequests {
+  val requestIndexIsIrrelevant = Some(210283L)
 
   private[this] lazy val istioGlobalDict: Seq[String] = {
     val yaml = Source.fromInputStream(
@@ -37,15 +38,14 @@ object MixerApiRequests {
     val dictionary = mkDictionary(requestPath, targetService, sourceLabel, targetLabel)
 
     val updated = mkAttributesUpdate(dictionary, Seq(responseCode, requestPath, targetService, sourceLabel, targetLabel, duration))
-    ReportRequest(attributeUpdate = Some(updated))
+    ReportRequest(requestIndexIsIrrelevant, Some(updated))
   }
 
   def mkCheckRequest(istioREquest: IstioRequest[_]) = {
-    val TODO = Some(1L)
     val dictionary = mkDictionary(istioREquest.requestedPath, istioREquest.targetService, istioREquest.sourceLabel, istioREquest.targetLabel)
     val requestAttributes = Seq(istioREquest.requestedPath, istioREquest.sourceLabel, istioREquest.targetLabel, istioREquest.targetService)
     val attributesUpdate = mkAttributesUpdate(dictionary, requestAttributes)
-    CheckRequest(TODO, Some(attributesUpdate))
+    CheckRequest(requestIndexIsIrrelevant, Some(attributesUpdate))
   }
 
   private def mkDictionary(

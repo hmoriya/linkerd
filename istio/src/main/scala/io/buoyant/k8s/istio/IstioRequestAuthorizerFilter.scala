@@ -25,7 +25,7 @@ trait IstioRequestAuthorizerFilter[Req, Resp] extends Filter[Req, Resp, Req, Res
         log.trace("Succesful pre-condition check for request: %s", istioRequest)
         callService(req, svc, istioRequest)
       } else {
-        log.warning("request [%s] failed Istio pre-condition check: %s", istioRequest, status)
+        log.warning("request [%s] failed Istio pre-condition check: %s-%s", istioRequest, status, status.reason)
         Future.value(toFailedResponse(status.httpCode, status.reason))
       }
     }
@@ -48,7 +48,7 @@ trait IstioRequestAuthorizerFilter[Req, Resp] extends Filter[Req, Resp, Req, Res
     mixerClient.report(
       response.responseCode,
       request.requestedPath,
-      response.targetService,
+      request.targetService,
       request.sourceLabel,
       request.targetLabel,
       response.responseDuration
